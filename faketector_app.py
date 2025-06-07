@@ -1,63 +1,114 @@
 import streamlit as st
+import time
 
-emotional_words = [
-    'breaking', 'shocking', 'secret', 'betrayal', 'outrage',
-    'doomed', 'conspiracy', 'share before they delete', 'exposed', 'reveal'
-]
+# ----- Helper functions -----
 
-fake_keywords = [
-    'global conspiracy', 'secret meeting', 'hidden agenda',
-    'they don’t want you to know', 'truth exposed', 'leaked documents'
-]
-
-def analyze_article(text):
+def fake_analysis(text):
+    """Simulate an analysis of the text, returning a score and reasons."""
     text_lower = text.lower()
-    emotional_hits = sum(1 for word in emotional_words if word in text_lower)
-    fake_hits = sum(1 for phrase in fake_keywords if phrase in text_lower)
-    total_flags = emotional_hits + fake_hits
+    score = 100
 
-    if total_flags >= 4:
-        credibility = ("Likely Fake", "🛑", "#FF4B4B")
-    elif total_flags >= 2:
-        credibility = ("Needs Review", "⚠️", "#FFC107")
+    # Dummy scoring logic (for demo)
+    if "miracle" in text_lower or "cure" in text_lower:
+        score = 35
+    elif "breaking" in text_lower:
+        score = 65
     else:
-        credibility = ("Likely True", "✅", "#4CAF50")
+        score = 85
 
-    explanation = []
-    if emotional_hits:
-        explanation.append(f"💬 Emotionally charged language detected ({emotional_hits} instance(s)).")
-    if fake_hits:
-        explanation.append(f"🔍 Suspicious conspiracy-like phrases found ({fake_hits} instance(s)).")
-    if not explanation:
-        explanation.append("👍 No major warning signs found.")
+    # Bias analysis dummy output
+    bias = "May contain emotional or exaggerated language." if score < 70 else "Neutral language detected."
 
-    credible_sources = [
-        {"title": "Fact Check: School Closure Rumors", "source": "Vera Files", "url": "https://verafiles.org"},
-        {"title": "DepEd Official Statement", "source": "Philippine Star", "url": "https://philstar.com"},
-        {"title": "How Fake News Spreads", "source": "Rappler", "url": "https://rappler.com"}
+    # Source credibility dummy output
+    source = "Source has limited trust history." if score < 70 else "Source is generally credible."
+
+    # Suggested articles dummy list
+    suggested = [
+        {"title": "Trusted source 1", "url": "https://trustednews1.com"},
+        {"title": "Trusted source 2", "url": "https://trustednews2.com"},
     ]
 
-    return credibility, explanation, credible_sources
+    return score, bias, source, suggested
 
-st.set_page_config(page_title="🕵️‍♀️ FAKEtector", page_icon="🕵️‍♀️", layout="centered")
-
-st.title("🕵️‍♀️ FAKEtector")
-st.markdown("### Your AI-powered assistant to spot fake news and keep you informed")
-
-article = st.text_area("Paste article or URL here...", height=220)
-
-if st.button("🔍 Analyze"):
-    if not article.strip():
-        st.warning("⚠️ Please paste some text before analyzing.")
+def get_status(score):
+    if score <= 40:
+        return "Fake", "🔴"
+    elif score <= 70:
+        return "Suspicious", "🟡"
     else:
-        (credibility_text, icon, color), explanation, sources = analyze_article(article)
-        st.markdown(f"<h2 style='color:{color};'>{icon} {credibility_text}</h2>", unsafe_allow_html=True)
-        explanation_md = "\n\n".join([f"> {line}" for line in explanation])
-        st.markdown("### Why?")
-        st.markdown(explanation_md)
-        st.markdown("### Trusted Sources to Check:")
-        for source in sources:
-            st.markdown(f"- [{source['title']}]({source['url']}) — *{source['source']}*")
+        return "Credible", "🟢"
 
-st.markdown("---")
-st.markdown("<small>FAKEtector © 2025 — Empowering Truth, One Article at a Time</small>", unsafe_allow_html=True)
+# ----- Streamlit UI -----
+
+st.set_page_config(page_title="FAKEtector", layout="centered")
+
+st.title("🕵️‍♂️ FAKEtector — Fake News Detector")
+
+# Step 1: Paste news article
+st.header("Step 1: Paste the News Article")
+news_text = st.text_area(
+    "Paste the news article or paragraph here:",
+    height=150,
+    placeholder='e.g. "BREAKING: Miracle cure for COVID-19 discovered!"'
+)
+
+# Step 2: Analyze button
+st.header("Step 2: Click “Analyze Now”")
+analyze_button = st.button("ANALYZE NOW")
+
+if analyze_button:
+    if not news_text.strip():
+        st.warning("Please paste some text to analyze.")
+    else:
+        with st.spinner("Analyzing..."):
+            time.sleep(2)  # simulate delay
+            score, bias_analysis, source_credibility, suggested_articles = fake_analysis(news_text)
+            status, status_color = get_status(score)
+
+        # Step 3: Show credibility score
+        st.header("Step 3: View the Credibility Score")
+        st.markdown(f"### Score: **{score}/100**")
+        st.markdown(f"### Status: {status_color} **{status}**")
+        st.progress(score / 100)
+
+        # Step 4: Detailed analysis tabs
+        st.header("Step 4: Check the Detailed Analysis")
+        tabs = st.tabs(["🧠 Bias Analysis", "📰 Source Credibility", "📚 Suggested Articles"])
+
+        with tabs[0]:
+            st.write(bias_analysis)
+
+        with tabs[1]:
+            st.write(source_credibility)
+
+        with tabs[2]:
+            st.write("Related trusted news:")
+            for article in suggested_articles:
+                st.markdown(f"- [{article['title']}]({article['url']})")
+
+        # Step 5: Learning Mode toggle
+        st.header("Step 5: Turn ON Learning Mode (Optional)")
+        learning_mode = st.checkbox("Learning Mode")
+
+        if learning_mode:
+            if score < 70:
+                st.info("You’ve just analyzed a biased headline. Here’s how to spot more of them: Look for exaggerated or emotional words!")
+            else:
+                st.info("This article seems credible. Keep practicing your analysis skills!")
+
+        # Step 6: Earn Your Digital Badges
+        st.header("Step 6: Earn Your Digital Badges!")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown("🥇 **Bias Breaker**")
+            st.caption("For analyzing 3 articles")
+        with col2:
+            st.markdown("📘 **Info Seeker**")
+            st.caption("For reading fact-check sources")
+        with col3:
+            st.markdown("🛡️ **Truth Defender**")
+            st.caption("For reporting a fake story")
+
+else:
+    st.info("Paste a news article above and click **ANALYZE NOW** to check its credibility.")
+
